@@ -1,0 +1,76 @@
+You are working in an EMPTY folder. Create a complete, independently runnable educational application: The Smallest Agent, Lesson 0, React Native + Expo + TypeScript edition.
+
+Create 10-smallest-agent-react-native-expo and a new root prompt named Prompt - Create the Enterprise Web Application from Scratch - React Native Expo TypeScript.txt. Save an identical BUILD-PROMPT.txt inside the project. Preserve every existing edition and prompt. Never read, copy, display or borrow real environment files or keys from earlier editions. Create only .env.example files; never overwrite a real .env.
+
+STACK AND STRUCTURE
+- Use the official Expo SDK 58 template, compatible React 19.3 / React Native 0.88, strict TypeScript and Expo Router. Check official versioned APIs and install native packages using expo install. Commit root and separate backend lockfiles. Node.js 24 LTS.
+- Build with actual native View, Text, Pressable, ScrollView and TextInput components for Android, iOS and web. Do not substitute a DOM-only application or a WebView.
+- Expo Router routes /, /learn, /run, /architecture and /walkthrough. A context provider above the routes preserves prompt, mode, answer and messages during navigation. Real tab clicks must work and show active state. Unknown routes must not silently show a fake lesson.
+- A separate Node.js TypeScript backend owns the actual @anthropic-ai/claude-agent-sdk query -> for await -> final-result loop and CLI runtime. No browser/native SDK import, Python bridge, direct REST replacement or fake live inference.
+- backend/src contains config, service, handlers, public contracts and HTTP adapter. Expo src contains routes, native components, public contracts, API parser, shared state and generated lesson assets. No client imports server code or SDK packages.
+- Root commands dev (both servers), dev:api, dev:web, start (Expo LAN), typecheck, lint, test, generate:lesson, build (backend + Expo web), build:native. Ports web 5100 / API 8500. Include cwd-safe Start-Application.ps1, README, ASSETS, VERIFICATION, BUILD-PROMPT, .gitignore and EAS development/preview/production profiles. Do not trigger paid cloud builds or publishing.
+
+PRESERVE ALL REQUESTED DESIGN AND CONTENT
+- Reference the course style at https://github.com/luiscoco/Udemy-Claude-Agent-SDK-lesson01-app. Copy only individually identified safe assets with provenance, never whole directories containing secrets.
+- Body around 21 px, secondary at least 16 px, code 18 px, spacious lineheight, 44 px touch targets, accessible labels/alerts/active navigation/focus, system fonts, readable headings and responsive native layouts.
+- Pastel blue input, lilac message inspector, mint answer, alternating peach/blue/mint/lilac lesson cards. Rounded borders, blue/orange accents, course astronaut, persistent accessible light/dark mode with storage failure fallback. Bound horizontal overflow inside code and diagram scrollers.
+- Syntax-colored, formatted, selectable code snippets using native nested Text tokens (e.g. Prism). No raw HTML. TypeScript/TSX, JavaScript, JSON and PowerShell; unknown languages remain safe text. Add copy actions and accurate filenames.
+- Safe native Markdown answer: headings/bold/HTTP(S) links/fenced code; unsupported markup literal. Never execute model HTML, scripts, remote images or WebView content.
+
+FIVE COMPLETE SECTIONS
+1. Agent lab: hero, stack context, API/key-presence status, default Hello-world prompt, examples, trim-aware 1–4000 counter, Stream/Simple, immediate duplicate lock, busy controls, cancel, elapsed time, Ctrl+Enter on web, idle/loading/success/error states and accessible notice. Final answer with real turns/duration/estimated cost/null-is-unavailable/error flag; copy and Markdown browser-download/native-share. Timestamped expandable syntax-colored JSON SDK timeline; 500-row display cap without losing final processing. No fake seeded answers. Specific safe HTTP errors remain visible and retryable. Prompt/answer persist across all lesson routes.
+2. Learn: at least six substantial cards explaining native rendering, Expo Router state, smallest query/iterator loop, private configuration, SDK messages vs tokens, tool isolation and final result.
+3. Run: exact Windows commands from Lesson 0 including cd, two npm installs, guarded own .env copies, edit backend key, root dev, URLs and Ctrl+C. Explain Node24, separate terminals, cwd helper, config precedence/restarts, model availability, turns 1–10 and key presence vs authenticated readiness. Explain physical phone LAN IP/API_HOST, emulator 10.0.2.2, localhost pitfalls, CORS/firewall, compatible Expo Go or SDK 58 development build, EAS signing/accounts, iOS local macOS requirement, build/export vs signed binary and public HTTPS deployment.
+4. Architecture: genuine local UML sequence with five lifelines(Student/device, React Native client, Node API, TypeScript Agent SDK/CLI, Claude API), 16 numbered call/return interactions, SDK-message loop and success/provider-failure/input-key alternatives. Native SVG rendering with bounded horizontal scrolling; browser download/native share SVG and editable PlantUML. No external diagram renderer required.
+5. Walkthrough: at least five actual syntax-colored excerpts with filenames and meaningful explanations from this new stack.
+
+MANDATORY UML EXPLANATIONS
+Each of the 16 arrows needs its own matching numbered pastel card: title, actual source filename, syntax-colored formatted excerpt and plain explanation. Use these interactions in order: submit prompt; POST stream; validate input/options; server delegation; SDK/provider boundary; model-response observation through the SDK iterator; safe projection; SSE frame; native state update; final result normalization; ResultMessage dispatch; safe answer and metrics; require done; safe error without done; UI error and notice; missing-key/input rejection before SDK execution.
+
+Generate excerpts deterministically from actual source files, tolerating formatter line breaks while failing missing markers or diagram number/title mismatches. SVG and PlantUML must share all 16 interaction labels. Regenerate assets during builds. For SDK-internal transport, show the real query/iterator application boundary and explain what the SDK owns; never invent an application-level provider HTTP implementation.
+
+SERVER CONTRACT AND LIFECYCLE
+- GET /api/health exposes only status and api_key_configured.
+- POST /api/agent/query accepts JSON {prompt} and returns result, num_turns, duration_ms, total_cost_usd and is_error.
+- POST /api/agent/stream accepts the same JSON and emits UTF-8 SSE message events then done. Failures emit error without done. ResultMessage is a safe public projection label, rather than a raw SDK class name.
+- Enforce actual request body bytes at 32 KiB, JSON content type/syntax, and a trimmed string of 1–4000 characters. Return safe 400/403/413/415/422 details. Do not echo submitted content.
+- Use an exact browser Origin allowlist including protocol and port, without wildcards or trust in forwarded headers. Native clients can omit Origin; explain that CORS is not authentication.
+- Missing key gives query HTTP 503 or an SSE error. Provider failure gives query HTTP 502 or a safe SSE error. Invalid input and missing credentials must never invoke the SDK.
+- Abort on disconnect, user cancellation and a three-minute deadline; heartbeat comments every 15 seconds. Clear timers, listeners and readers, and close the SDK conversation in finally. Respect backpressure without accumulating listeners or hanging after disconnect.
+- SDK options: tools=[], allowedTools=[], permissionMode=dontAsk, empty settings/skills/plugins/MCP, strictMcpConfig=true, persistSession=false and maxTurns default 1 bounded to 1–10. Disable remote Claude.ai MCP. Supply this application's key in subprocess options without changing process-wide credentials.
+- Allowlist projected text, system subtype, model and final metrics. Exclude raw SDK/config/environment, thinking, tool inputs, session identifiers and filesystem paths. Redact exact key occurrences before truncation. A non-success result subtype remains an error even if is_error=false; done cannot override it.
+- Use expo/fetch for native response streams. Parse incremental UTF-8, split CRLF, comments, partial/multiple frames and multiline data. Validate contracts, require a final result plus done, cancel readers on error and report premature EOF. Final result processing must continue after the timeline display limit.
+
+ENVIRONMENT EXAMPLES
+Private backend/.env.example:
+ANTHROPIC_API_KEY=sk-ant-replace-with-your-key
+CLAUDE_MODEL=
+AGENT_SYSTEM_PROMPT=
+AGENT_MAX_TURNS=1
+API_HOST=127.0.0.1
+API_PORT=8500
+ALLOWED_ORIGINS=http://localhost:5100,http://127.0.0.1:5100
+
+Load only this application's backend file relative to its module, with process-environment precedence. Placeholder keys count as missing. Model access and billing depend on the user's account. Restart the backend after edits.
+
+Public root .env.example:
+EXPO_PUBLIC_API_URL=http://127.0.0.1:8500
+
+Never put credentials in EXPO_PUBLIC variables. Rebuild or restart Expo after changing public values. Ignore real environment variants except examples, dependencies, build output, caches and verification artifacts.
+
+VERIFICATION AND DELIVERY
+Run strict TypeScript checks, required Expo lint, meaningful mocked SDK/handler/client parser tests, deterministic generation, Expo package compatibility and Expo Doctor. Build the web app and backend, plus Android/iOS JavaScript exports. Distinguish JavaScript compilation from signed application builds and native runtime testing.
+
+Verify actual HTTP health, malformed input, media type, body size, Origin rejection and missing-key behavior with credentials disabled. In a real browser, click all five tabs on the same mounted app; check active state, prompt retention, all 16 source cards, code colors, desktop/mobile overflow, persistent theme and both request modes. Use explicit fixtures for browser success/error result tests without spending API credits. Do not rely on a previous edition for application runtime.
+
+Document exactly what ran and any native-device/provider limitations in VERIFICATION.md. Never claim live Claude authentication/inference or native runtime QA without performing it. Stop only processes owned by this task. Deliver the new folder, matching prompt and short Windows run commands.
+
+Official references:
+https://docs.expo.dev/versions/v58.0.0/
+https://docs.expo.dev/versions/v58.0.0/sdk/expo/
+https://docs.expo.dev/router/introduction/
+https://docs.expo.dev/versions/v58.0.0/sdk/filesystem/
+https://code.claude.com/docs/en/agent-sdk/typescript
+
+SVG RENDERING REQUIREMENT
+The workflow SVG must use explicit presentation attributes on each element (fill, stroke, stroke-width, stroke-dasharray, marker-end and font attributes). SvgXml does not apply embedded CSS stylesheets: do not rely on <style> or class selectors. Combined-fragment frames must explicitly use fill="none". Verify the rendered diagram itself: all 16 arrows, all five dashed lifelines, transparent alternative frames and readable sans-serif labels. Inspect an actual diagram screenshot and computed styles; an SVG element count alone does not prove correct rendering. Keep downloaded SVG and embedded XML generated from the same template.

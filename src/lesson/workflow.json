@@ -1,0 +1,146 @@
+[
+  {
+    "number": 1,
+    "title": "Run agent (prompt)",
+    "source": "src/lib/state.tsx",
+    "language": "tsx",
+    "text": "Trim the native input and lock immediately.",
+    "explanation": "The provider is mounted above Expo Router screens, so navigation preserves the lab. Server validation repeats these constraints.",
+    "code": "const trimmed = prompt.trim();\nif (locked.current || !trimmed || trimmed.length > 4000) return;\nlocked.current = true;\nsetStatus(\"loading\");\nsetError(\"\");\nsetResult(null);\nsetMessages([]);\nsetElapsed(0);\nconst active = new AbortController();\ncontroller.current = active;"
+  },
+  {
+    "number": 2,
+    "title": "POST /api/agent/stream",
+    "source": "src/lib/api-core.ts",
+    "language": "typescript",
+    "text": "Post JSON using expo/fetch.",
+    "explanation": "The public base URL changes for web, emulator and physical devices. The Claude key never enters the Expo dependency graph.",
+    "code": "const response = await fetch(base + \"/api/agent/stream\", {\n  method: \"POST\",\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ prompt }),\n  signal,\n});\nif (!response.ok) {\n  const data: unknown = await response.json().catch(() => null);\n  throw new Error(\n    detail("
+  },
+  {
+    "number": 3,
+    "title": "Validate; tools disabled",
+    "source": "backend/src/handlers.ts",
+    "language": "typescript",
+    "text": "Validate untrusted JSON on the server.",
+    "explanation": "The HTTP adapter enforces explicit CORS and a 32 KiB body limit before handlers validate content type and a trimmed 1–4000 character prompt.",
+    "code": "  const prompt = validatePrompt(body);\n  if (prompt === null)\n    throw new InputError(\n      422,\n      \"Prompt must contain 1–4000 characters after trimming.\",\n    );\n  return prompt;\n}\nfunction inputResponse(error: unknown): Response {\n  return Response.json("
+  },
+  {
+    "number": 4,
+    "title": "streamAgent() / query()",
+    "source": "backend/src/server.ts",
+    "language": "typescript",
+    "text": "Route the request to the Node SDK service.",
+    "explanation": "A separate Node process can run the CLI-backed Agent SDK while the Expo client remains native. This server boundary is the same for web and devices.",
+    "code": "const response = await (route.endsWith(\"/stream\")\n  ? handlers.stream(request)\n  : handlers.query(request));\nres.writeHead(response.status, Object.fromEntries(response.headers));\nres.flushHeaders();\nconst reader = response.body?.getReader();\ntry {\n  if (reader)\n    while (true) {\n      const { value, done } = await reader.read();"
+  },
+  {
+    "number": 5,
+    "title": "Prompt; no built-in tools",
+    "source": "backend/src/agent-service.ts",
+    "language": "typescript",
+    "text": "Invoke the actual TypeScript Agent SDK.",
+    "explanation": "The SDK owns the Claude transport and CLI runtime. This source is the application call boundary, not an implementation of the SDK’s internal network request.",
+    "code": "const conversation = queryFn({\n  prompt,\n  options: agentOptions(config, controller),\n});\ntry {\n  for await (const message of conversation) {\n    if (message.type === \"result\") return resultData(message);\n  }\n  throw new Error(\"Agent ended without a result\");\n} finally {"
+  },
+  {
+    "number": 6,
+    "title": "Model response",
+    "source": "backend/src/agent-service.ts",
+    "language": "typescript",
+    "text": "Consume the SDK async iterator.",
+    "explanation": "The SDK returns model and lifecycle messages to this application loop. Tools, skills, MCP, plugins and sessions are disabled through explicit options.",
+    "code": "    for await (const message of conversation) {\n      if (message.type === \"result\") return resultData(message);\n    }\n    throw new Error(\"Agent ended without a result\");\n  } finally {\n    conversation.close?.();\n  }\n}\nasync function* streamAgent(\n  prompt: string,"
+  },
+  {
+    "number": 7,
+    "title": "Safe SDK message",
+    "source": "backend/src/agent-service.ts",
+    "language": "typescript",
+    "text": "Project SDK messages into public contracts.",
+    "explanation": "Only selected text, system subtype and final result fields leave the server. Exact API-key occurrences are redacted before summary truncation.",
+    "code": "        yield { type, summary, data };\n      }\n      if (!foundResult) throw new Error(\"Agent ended without a result\");\n    } finally {\n      conversation.close?.();\n    }\n  }\n  return { runAgent, streamAgent };\n}\n"
+  },
+  {
+    "number": 8,
+    "title": "SSE message event",
+    "source": "backend/src/handlers.ts",
+    "language": "typescript",
+    "text": "Encode UTF-8 Server-Sent Events.",
+    "explanation": "Heartbeats, request cancellation, reader cancellation and the three-minute deadline clean up stream execution.",
+    "code": "const sendEvent = (event: string, data: unknown) => {\n  if (!closed)\n    streamController.enqueue(\n      encoder.encode(\n        `event: ${event}\\ndata: ${JSON.stringify(data)}\\n\\n`,\n      ),\n    );\n};\nif (!config.apiKeyConfigured) {\n  sendEvent(\"error\", { detail: MISSING_KEY });"
+  },
+  {
+    "number": 9,
+    "title": "Update typed state",
+    "source": "src/lib/state.tsx",
+    "language": "tsx",
+    "text": "Append a timestamped native timeline row.",
+    "explanation": "The display stops at 500 rows, while every final result is still processed independently. Each row can expand to syntax-colored JSON.",
+    "code": "setMessages((previous) =>\n  previous.length < 500\n    ? [\n        ...previous,\n        { ...message, elapsed: (Date.now() - started) / 1000 },\n      ]\n    : previous,\n);\nif (\n  message.type === \"ResultMessage\" &&"
+  },
+  {
+    "number": 10,
+    "title": "ResultMessage fields",
+    "source": "backend/src/agent-service.ts",
+    "language": "typescript",
+    "text": "Normalize final SDK result fields.",
+    "explanation": "Non-success subtypes remain failures. Answer, turns, duration, cost and error flag are the complete public result.",
+    "code": "function resultData(message: SDKResultMessage): AgentResult {\n  return {\n    result:\n      message.subtype === \"success\"\n        ? redact(message.result || \"\")\n        : \"The agent could not complete this prompt. Check the server configuration.\",\n    num_turns: message.num_turns,\n    duration_ms: message.duration_ms,\n    total_cost_usd: message.total_cost_usd ?? null,\n    is_error: message.subtype !== \"success\" || Boolean(message.is_error),"
+  },
+  {
+    "number": 11,
+    "title": "SSE ResultMessage",
+    "source": "src/lib/api-core.ts",
+    "language": "typescript",
+    "text": "Validate a ResultMessage received over SSE.",
+    "explanation": "The final result uses the same message event as progress. Missing final results and prematurely closed transports fail explicitly.",
+    "code": "  if (event === \"message\") {\n    const message = messageFrom(data);\n    if (message.type === \"ResultMessage\") finalReceived = true;\n    onMessage(message);\n  }\n});\nif (!completed || !finalReceived)\n  throw new Error(\n    \"The connection ended before the agent finished. Please try again.\",\n  );"
+  },
+  {
+    "number": 12,
+    "title": "Render answer + metrics",
+    "source": "src/components/Answer.tsx",
+    "language": "tsx",
+    "text": "Render the answer as native text and colored code.",
+    "explanation": "There is no raw HTML insertion or WebView. Markdown headings, bold text, safe HTTP(S) links and code fences map to native components; other markup remains text.",
+    "code": "export function Answer({ text, color }: { text: string; color: string }) {\n  // Model output becomes native Text nodes, never executable HTML or a WebView.\n  return (\n    <View>\n      {text.split(/(```[\\s\\S]*?```)/g).map((part, i) => {\n        if (part.startsWith(\"```\")) {\n          const match = /^```([^\\n]*)\\n([\\s\\S]*?)```$/.exec(part);\n          return (\n            <CodeBlock\n              key={i}"
+  },
+  {
+    "number": 13,
+    "title": "SSE done event",
+    "source": "src/lib/api-core.ts",
+    "language": "typescript",
+    "text": "Require both final result and done.",
+    "explanation": "Completion cannot override the final is_error flag. The incremental parser handles split Unicode, CRLF, comments and multiple frames.",
+    "code": "  if (event === \"done\") completed = true;\n  if (event === \"message\") {\n    const message = messageFrom(data);\n    if (message.type === \"ResultMessage\") finalReceived = true;\n    onMessage(message);\n  }\n});\nif (!completed || !finalReceived)\n  throw new Error(\n    \"The connection ended before the agent finished. Please try again.\","
+  },
+  {
+    "number": 14,
+    "title": "SSE error; no done",
+    "source": "backend/src/handlers.ts",
+    "language": "typescript",
+    "text": "Emit a safe SSE error without done.",
+    "explanation": "Simple-mode provider failures return 502. Raw exceptions, filesystem paths and environment values are not sent to clients.",
+    "code": "    } catch {\n      sendEvent(\"error\", { detail: FAILURE });\n    } finally {\n      finish();\n    }\n  })();\n},\ncancel() {\n  abort();\n},"
+  },
+  {
+    "number": 15,
+    "title": "Error + snackbar",
+    "source": "src/lib/state.tsx",
+    "language": "tsx",
+    "text": "Show an error and accessible notice.",
+    "explanation": "Controls restore in finally. Native cancellation, disconnects and the client deadline abort owned work.",
+    "code": "} catch (err) {\n  const message = active.signal.aborted\n    ? \"The request was canceled or timed out.\"\n    : err instanceof Error\n      ? err.message\n      : \"The request could not finish.\";\n  setError(message);\n  setNotice(message);\n  setStatus(\"error\");\n} finally {"
+  },
+  {
+    "number": 16,
+    "title": "Key: SSE error / input: 422",
+    "source": "backend/src/handlers.ts",
+    "language": "typescript",
+    "text": "Reject missing credentials before calling the SDK.",
+    "explanation": "Simple mode returns 503. Invalid inputs return validation status before streaming starts. Neither path makes a paid model call.",
+    "code": "if (!config.apiKeyConfigured) {\n  sendEvent(\"error\", { detail: MISSING_KEY });\n  finish();\n  return;\n}\nrequest.signal.addEventListener(\"abort\", abort, { once: true });\nif (request.signal.aborted) {\n  abort();\n  return;\n}"
+  }
+]

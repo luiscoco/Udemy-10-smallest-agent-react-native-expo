@@ -1,41 +1,90 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
 node_modules/
-
-# Expo
+backend/node_modules/
 .expo/
 dist/
-web-build/
-expo-env.d.ts
+dist-native/
+backend/dist/
+.env
+.env.*
+!.env.example
+backend/.env
+coverage/
+verification/*.png
+android/
+ios/
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
+# Local credentials, dependencies and generated production assets
+.env
+.env.*
+!.env.example
+!.env.template
+node_modules/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+.mypy_cache/
+.ruff_cache/
+.next/
+.svelte-kit/
+.angular/
+.vite/
+build/
+dist/
+dist-test/
+coverage/
+bin/
+obj/
+.vs/
+artifacts/
+video/
+verification/
 *.tsbuildinfo
+*.log
+*.pyc
+*.pyo
+*.user
+*.pem
+*.key
+*.pfx
+*.p12
+.DS_Store
+Thumbs.db
 
-# generated native folders
-/ios
-/android
+# Public-source publication: local tooling, platform caches and private settings
+.tools/
+.claude/
+.codex/
+.aws/
+.azure/
+.gcloud/
+.vercel/
+.expo/
+.dart_tool/
+.gradle/
+.kotlin/
+.idea/
+.nuxt/
+.output/
+.aspire/
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+Pods/
+target/
+out-tsc/
+dist-native/
+test-results/
+playwright-report/
+local.properties
+local.settings.json
+appsettings.Development.local.json
+config.local.json
+*.jks
+*.keystore
+*.apk
+*.aab
+*.ipa
+*.xcuserstate
